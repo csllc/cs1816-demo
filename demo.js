@@ -93,7 +93,14 @@ ble.once( 'stateChange', function(state) {
       console.log( label('Connecting... ') );
 
       // Create an object to manage the discovered peripheral
-      var dongle = new Dongle( peripheral );
+      var dongle = new Dongle( peripheral, {
+        verbose: false,
+      } );
+
+
+      dongle.on('status', function( slot, status ) {
+        console.log( 'STATUS: ', slot, status );
+      });
 
       dongle.connect()
       .then( () => dongle.readDongleInfo() )
@@ -118,13 +125,16 @@ ble.once( 'stateChange', function(state) {
           // for future iterations; for example to configure the CANBUS
           // data rate.
 
+          console.log( label('Configuring... ') );
           dongle.configure({})
 
           // Turn power on to the controller
           .then( () => dongle.keyswitch( true ) )
 
-          // Set up the MC device
+          // Set up the MotorController device instance and watchers
           .then( () => {
+
+            console.log( label('Initializing watchers') );
 
             // Clear all watchers. This is unnecessary since we just connected,
             // but it's here as a way to demonstrate the function
@@ -135,6 +145,12 @@ ble.once( 'stateChange', function(state) {
             // callback whenever the value changes
             dongle.watch( 0, CONTROLLER_ID, 0x005F, ( value ) =>{
               console.log( label('Charge Mode: '), value );
+
+              // If you just wanted to read something once, you wouldn't do this
+              // (set a watcher and then cancel it).  You'd use readMemory
+
+              // This is just here to show how to stop watching a variable
+              dongle.unwatch( 0 );
             });
 
             // Watcher slot 1 looks for changes in the Fault Code RAM variable
@@ -147,25 +163,47 @@ ble.once( 'stateChange', function(state) {
               console.log( label('Voltage: '), value );
             });
 
-            // Cancel the watcher in slot 0
-            dongle.unwatch( 0 );
+            // Watcher slot 3 looks for changes in the PWM status
+            dongle.watch( 3, CONTROLLER_ID, 0x002E, 1, ( value ) =>{
+              console.log( label('PWM: '), value );
+            });
+
 
             // Currently the one and only CS1108 is addressed as device '1'
             let mc = new MotorController( CONTROLLER_ID, dongle );
 
-            // Read a block of memory bytes (EEPROM)
-            mc.readMemory( 0x0300, 128 )
+            console.log( label('Writing EEPROM address 0') );
+
+            // write '1' to bank 3(EEPROM) offset 0x00
+            mc.writeMemory( 0x0300, Buffer.from([1]) )
+
+            .then( () => console.log( label( 'Reading Memory... ' )) )
+
+            .then( () => mc.readMemory( 0x0300, 128 ))
+
             .then( (data) => {
               printData( 0x300, data );
+
+              console.log( label('Reading more memory... ') );
+
+              return mc.readMemory( 0x0380, 128 );
+            })
+            .then( (data) => {
+              printData( 0x380, data );
+
+              console.log( label('Writing memory... ') );
 
               // This just writes the first byte back to the motor controller
               return mc.writeMemory( 0x0300, Buffer.from([data[0]]) );
             })
+            .then( () => console.log( label( 'Success!' )) )
             .catch( (err) => {
 
-              console.error( error('Error reading/writing the controller'), err );
-              dongle.disconnect();
-              process.exit( 1 );
+              console.error( error('Error reading/writing the controller'), err.message );
+              // stay active so we can see the watchers
+
+              // dongle.disconnect();
+              // process.exit( 1 );
 
             });
 
