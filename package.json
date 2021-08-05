@@ -10,6 +10,7 @@
     "@csllc/cs-mb-ble": "^1.0.3",
     "@csllc/cs-modbus": "^2.5.0",
     "chalk": "^4.1.0",
+    "minimist": "^1.2.5",
     "underscore": "^1.10.2"
   },
   "devDependencies": {},
