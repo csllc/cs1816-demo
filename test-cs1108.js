@@ -43,6 +43,49 @@ const chalk = require('chalk');
 const error = chalk.bold.red;
 const label = chalk.blue;
 
+let watchers = [
+
+  new Watcher(0, CONTROLLER_ID, 0x0056, 2, (value) => {
+    console.log(label('VBAT: '), value);
+  }),
+
+  new Watcher(1, CONTROLLER_ID, 0x0066, 2, (value) => {
+    console.log(label('Current: '), value);
+  }),
+
+  new Watcher(2, CONTROLLER_ID, 0x0029, (value) => {
+    console.log(label('Throt: '), value);
+  }),
+
+  new Watcher(3, CONTROLLER_ID, 0x0025, (value) => {
+    console.log(label('MscFlg5: '), value);
+  }),
+
+  new Watcher(4, CONTROLLER_ID, 113, (value) => {
+    console.log(label('RAM 113: '), value);
+  }),
+
+  new Watcher(5, CONTROLLER_ID, 39, (value) => {
+    console.log(label('RAM 39: '), value);
+  }),
+
+  new Watcher(6, CONTROLLER_ID, 98, 2, (value) => {
+    console.log(label('RAM 98: '), value);
+  }),
+
+  new Watcher(7, CONTROLLER_ID, 96, 2, (value) => {
+    console.log(label('RAM 96: '), value);
+  }),
+
+  new Watcher(8, CONTROLLER_ID, 42, 2, (value) => {
+    console.log(label('RAM 42: '), value);
+  }),
+
+  new Watcher(9, CONTROLLER_ID, 46, (value) => {
+    console.log(label('RAM 46: '), value);
+  }),
+];
+
 
 // returns a string with prepended zeros to the requested length
 function zeroPad(number, length) {
@@ -150,10 +193,12 @@ async function Cs1108MemoryTest() {
 async function testReadControllerMemory() {
 
   let result;
+  // Currently the one and only CS1108 is addressed as device '1'
+  let mc = new MotorController(CONTROLLER_ID, dongle);
 
   while (1) {
     console.time('Read Controller RAM');
-    result = await dongle.readMemory(0x0000, 1);
+    result = await mc.readMemory(0x0000, 1);
     console.timeEnd('Read Controller RAM');
     console.log('Value: ', result);
   }
@@ -173,53 +218,61 @@ async function setCs1108Watchers() {
 
   await dongle.unwatchAll();
 
-  // Watcher slot 0 looks for changes in the Charge Mode RAM variable
-  // You'll get a callback with the current value, and then another
-  // callback whenever the value changes
-  await dongle.watch(0, CONTROLLER_ID, 0x005F, (value) => {
-    console.log(label('Charge Mode: '), value);
+  watchers.forEach(async function(watcher) {
 
-    // If you just wanted to read something once, you wouldn't do this
-    // (set a watcher and then cancel it).  You'd use readMemory
+    await dongle.setWatchers(watcher);
 
-    // This is just here to show how to stop watching a variable
-    dongle.unwatch(0);
   });
 
-  // Watcher slot 1 looks for changes in the Fault Code RAM variable
-  await dongle.watch(1, CONTROLLER_ID, 0x0038, (value) => {
-    console.log(label('Fault Code: '), value);
-  });
 
-  // Watcher slot 2 looks for changes in the 16-bit voltage reading
-  await dongle.watch(2, CONTROLLER_ID, 0x0064, 2, (value) => {
-    console.log(label('Voltage: '), value);
-  });
 
-  // Watcher slot 3 looks for changes in the PWM status
-  await dongle.watch(3, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM3: '), value);
-  });
+  // // Watcher slot 0 looks for changes in the Charge Mode RAM variable
+  // // You'll get a callback with the current value, and then another
+  // // callback whenever the value changes
+  // await dongle.watch(0, CONTROLLER_ID, 0x005F, (value) => {
+  //   console.log(label('Charge Mode: '), value);
 
-  // Put in more watchers, up to the limit
-  await dongle.watch(4, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM4: '), value);
-  });
-  await dongle.watch(5, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM5: '), value);
-  });
-  await dongle.watch(6, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM6: '), value);
-  });
-  await dongle.watch(7, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM7: '), value);
-  });
-  await dongle.watch(8, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM8: '), value);
-  });
-  await dongle.watch(9, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM9: '), value);
-  });
+  //   // If you just wanted to read something once, you wouldn't do this
+  //   // (set a watcher and then cancel it).  You'd use readMemory
+
+  //   // This is just here to show how to stop watching a variable
+  //   dongle.unwatch(0);
+  // });
+
+  // // Watcher slot 1 looks for changes in the Fault Code RAM variable
+  // await dongle.watch(1, CONTROLLER_ID, 0x0038, (value) => {
+  //   console.log(label('Fault Code: '), value);
+  // });
+
+  // // Watcher slot 2 looks for changes in the 16-bit voltage reading
+  // await dongle.watch(2, CONTROLLER_ID, 0x0064, 2, (value) => {
+  //   console.log(label('Voltage: '), value);
+  // });
+
+  // // Watcher slot 3 looks for changes in the PWM status
+  // await dongle.watch(3, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM3: '), value);
+  // });
+
+  // // Put in more watchers, up to the limit
+  // await dongle.watch(4, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM4: '), value);
+  // });
+  // await dongle.watch(5, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM5: '), value);
+  // });
+  // await dongle.watch(6, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM6: '), value);
+  // });
+  // await dongle.watch(7, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM7: '), value);
+  // });
+  // await dongle.watch(8, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM8: '), value);
+  // });
+  // await dongle.watch(9, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM9: '), value);
+  // });
 
   // await dongle.watch(10, CONTROLLER_ID, 0x002E, 1, (value) => {
   //   console.log(label('PWM10: '), value);
@@ -291,48 +344,6 @@ async function clearAllCs1108Watchers() {
 
 }
 
-let watchers = [
-
-  new Watcher(0, CONTROLLER_ID, 0x005F, (value) => {
-    console.log(label('Watch 0: '), value);
-  }),
-
-  new Watcher(1, CONTROLLER_ID, 0x005F, (value) => {
-    console.log(label('Watch 1: '), value);
-  }),
-
-  new Watcher(2, CONTROLLER_ID, 0x005F, (value) => {
-    console.log(label('Watch 2: '), value);
-  }),
-
-  new Watcher(3, CONTROLLER_ID, 0x005F, (value) => {
-    console.log(label('Watch 3: '), value);
-  }),
-
-  new Watcher(4, CONTROLLER_ID, 0x005F, (value) => {
-    console.log(label('Watch 4: '), value);
-  }),
-
-  new Watcher(5, CONTROLLER_ID, 0x005F, (value) => {
-    console.log(label('Watch 5: '), value);
-  }),
-
-  new Watcher(6, CONTROLLER_ID, 0x005F, (value) => {
-    console.log(label('Watch 6: '), value);
-  }),
-
-  new Watcher(7, CONTROLLER_ID, 0x005F, (value) => {
-    console.log(label('Watch 7: '), value);
-  }),
-
-  new Watcher(8, CONTROLLER_ID, 0x005F, (value) => {
-    console.log(label('Watch 8: '), value);
-  }),
-
-  new Watcher(9, CONTROLLER_ID, 0x005F, (value) => {
-    console.log(label('Watch 9: '), value);
-  }),
-];
 
 async function setAllWatchersInOneGo() {
 
@@ -392,18 +403,18 @@ ble.once('stateChange', function(state) {
           console.log(label('Configuring... '));
           dongle.configure()
 
-          .then(() => setCs1108Watchers())
+            //          .then(() => setCs1108Watchers())
 
 
-          // .then(() => Cs1108MemoryTest())
+            // .then(() => Cs1108MemoryTest())
 
-          // .then(() => testReadControllerMemory())
+            //.then(() => testReadControllerMemory())
 
-          // .then(() => clearAllCs1108Watchers())
+            // .then(() => clearAllCs1108Watchers())
 
           .then(() => setAllWatchersInOneGo())
 
-          .then(() => clearAllWatchersInOneGo())
+          // .then(() => clearAllWatchersInOneGo())
 
 
           // .then(() => {
