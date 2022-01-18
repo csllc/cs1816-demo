@@ -176,33 +176,33 @@ async function setCs1108Watchers(dongle) {
 
   await dongle.unwatchAll();
 
-  // Watcher slot 0 looks for changes in the Charge Mode RAM variable
-  // You'll get a callback with the current value, and then another
-  // callback whenever the value changes
-  await dongle.watch(0, CONTROLLER_ID, 0x005F, (value) => {
-    console.log(label('Charge Mode: '), value);
+  // // Watcher slot 0 looks for changes in the Charge Mode RAM variable
+  // // You'll get a callback with the current value, and then another
+  // // callback whenever the value changes
+  // await dongle.watch(0, CONTROLLER_ID, 0x005F, (value) => {
+  //   console.log(label('Charge Mode: '), value);
 
-    // If you just wanted to read something once, you wouldn't do this
-    // (set a watcher and then cancel it).  You'd use readMemory
+  //   // If you just wanted to read something once, you wouldn't do this
+  //   // (set a watcher and then cancel it).  You'd use readMemory
 
-    // This is just here to show how to stop watching a variable
-    dongle.unwatch(0);
-  });
+  //   // This is just here to show how to stop watching a variable
+  //   dongle.unwatch(0);
+  // });
 
-  // Watcher slot 1 looks for changes in the Fault Code RAM variable
-  await dongle.watch(1, CONTROLLER_ID, 0x0038, (value) => {
-    console.log(label('Fault Code: '), value);
-  });
+  // // Watcher slot 1 looks for changes in the Fault Code RAM variable
+  // await dongle.watch(1, CONTROLLER_ID, 0x0038, (value) => {
+  //   console.log(label('Fault Code: '), value);
+  // });
 
-  // Watcher slot 2 looks for changes in the 16-bit voltage reading
-  await dongle.watch(2, CONTROLLER_ID, 0x0064, 2, (value) => {
-    console.log(label('Voltage: '), value);
-  });
+  // // Watcher slot 2 looks for changes in the 16-bit voltage reading
+  // await dongle.watch(2, CONTROLLER_ID, 0x0064, 2, (value) => {
+  //   console.log(label('Voltage: '), value);
+  // });
 
-  // Watcher slot 3 looks for changes in the PWM status
-  await dongle.watch(3, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM3: '), value);
-  });
+  // // Watcher slot 3 looks for changes in the PWM status
+  // await dongle.watch(3, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM3: '), value);
+  // });
 
   // Put in more watchers, up to the limit
   // await dongle.watch(4, CONTROLLER_ID, 0x002E, 1, (value) => {
