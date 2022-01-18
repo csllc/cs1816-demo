@@ -205,23 +205,31 @@ async function setCs1108Watchers(dongle) {
   });
 
   // Put in more watchers, up to the limit
-  await dongle.watch(4, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM4: '), value);
-  });
-  await dongle.watch(5, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM5: '), value);
-  });
-  await dongle.watch(6, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM6: '), value);
-  });
-  await dongle.watch(7, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM7: '), value);
-  });
-  await dongle.watch(8, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM8: '), value);
-  });
-  await dongle.watch(9, CONTROLLER_ID, 0x002E, 1, (value) => {
-    console.log(label('PWM9: '), value);
+  // await dongle.watch(4, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM4: '), value);
+  // });
+  // await dongle.watch(5, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM5: '), value);
+  // });
+  // await dongle.watch(6, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM6: '), value);
+  // });
+  // await dongle.watch(7, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM7: '), value);
+  // });
+  // await dongle.watch(8, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM8: '), value);
+  // });
+  // await dongle.watch(9, CONTROLLER_ID, 0x002E, 1, (value) => {
+  //   console.log(label('PWM9: '), value);
+  // });
+
+  // Add superwatcher
+  // TODO: Only do this if reported dongle version is > some value
+  await dongle.superwatch(CONTROLLER_ID, [0x002E, 0x0064, 0x0038], (value) => {
+    // TODO: Won't there be two parameters for this callback?
+    // One for address (16 bit), other for value?
+    console.log(label('SuperWatcher: '), value);
   });
 
 }
