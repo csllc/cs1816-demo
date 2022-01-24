@@ -324,9 +324,9 @@ ble.once('stateChange', function(state) {
       });
 
       connect(dongle)
-      .then(() => setCs1108Watchers(dongle))
-
       .then(() => Cs1108MemoryTest(dongle))
+
+      .then(() => setCs1108Watchers(dongle))
 
       .catch((err) => {
         console.log(err);
