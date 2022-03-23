@@ -239,8 +239,6 @@ async function setCs1108Watchers(dongle) {
     });
   }
 
-
-
   // Delay to demonstrate re-setting or clearing the super-watcher
   // await (async () => {return new Promise(resolve => setTimeout(resolve, 5000)); })();
 
@@ -256,6 +254,18 @@ async function setCs1108Watchers(dongle) {
   // await dongle.superwatch(CONTROLLER_ID, [0x0064, 0x0065], (value) => {
   //   console.log(label('SuperWatcher: '), value);
   // });
+
+  // Read back watcher configuration
+  if (dongleInfo && parseFloat(dongleInfo.softwareRevision) >= 1.4) {
+    dongle.getWatchers().then((watchers) => {
+      console.log(label("Watchers:"), watchers);
+    });
+
+    dongle.getSuperWatcher().then((members) => {
+      console.log(label("SuperWatcher Members:"), members);
+    });
+  }
+
 
  }
 
