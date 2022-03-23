@@ -227,7 +227,7 @@ async function setCs1108Watchers(dongle) {
   });
 
   // Add superwatcher - up to 25 addresses
-  if (dongleInfo && parseFloat(dongleInfo.softwareRevision) >= 1.4) {
+  if (dongleInfo && parseFloat(dongleInfo.softwareRevision) >= 1.5) {
     let superWatcherMembers = [0x0005, 0x0006, 0x0007, 0x0008, 0x0009,
                                0x000A, 0x000B, 0x000C, 0x000D, 0x000E,
                                0x000F, 0x0010, 0x0011, 0x0012, 0x0013,
