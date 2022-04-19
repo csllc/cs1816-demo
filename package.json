@@ -7,7 +7,7 @@
     "lib": "lib"
   },
   "dependencies": {
-    "@csllc/cs-mb-ble": "^1.0.3",
+    "@csllc/cs-mb-ble": "csllc/cs-mb-ble#zhivago-fixes",
     "@csllc/cs-modbus": "^2.5.0",
     "chalk": "^4.1.0",
     "minimist": "^1.2.5",

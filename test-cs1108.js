@@ -9,7 +9,7 @@
 // this is a workaround as suggested by https://github.com/sandeepmistry/noble/issues/570
 var ble;
 try {
-  ble = require('noble');
+  ble = require('@abandonware/noble');
 } catch (err) {
 
   console.error('Not compatible with this BLE hardware', err);
