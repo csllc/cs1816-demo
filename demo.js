@@ -8,7 +8,7 @@
 // this is a workaround as suggested by https://github.com/sandeepmistry/noble/issues/570
 var ble;
 try {
-  ble = require('noble');
+  ble = require('@abandonware/noble');
 } catch (err) {
 
   console.error('Not compatible with this BLE hardware', err);
@@ -39,6 +39,8 @@ const label = chalk.blue;
 const CONTROLLER_ID = 1;
 
 let dongleConfig = parseCommandLine();
+
+let dongleInfo;
 
 // returns a string with prepended zeros to the requested length
 function zeroPad(number, length) {
@@ -131,21 +133,21 @@ async function connect(dongle) {
 
   await dongle.connect();
 
-  let info = await dongle.readDongleInfo();
+  dongleInfo = await dongle.readDongleInfo();
 
   console.log(label('Connected.'));
 
   console.log(label('Dongle'));
-  console.log(label('    Model.       :'), info.modelNumber);
-  console.log(label('    Serial Number:'), info.serialNumber);
-  console.log(label('    Fw Revision  :'), info.firmwareRevision);
-  console.log(label('    Hw Revision  :'), info.hardwareRevision);
-  console.log(label('    Sw Revision  :'), info.softwareRevision);
-  console.log(label('    Manufacturer :'), info.manufacturerName);
+  console.log(label('    Model.       :'), dongleInfo.modelNumber);
+  console.log(label('    Serial Number:'), dongleInfo.serialNumber);
+  console.log(label('    Fw Revision  :'), dongleInfo.firmwareRevision);
+  console.log(label('    Hw Revision  :'), dongleInfo.hardwareRevision);
+  console.log(label('    Sw Revision  :'), dongleInfo.softwareRevision);
+  console.log(label('    Manufacturer :'), dongleInfo.manufacturerName);
 
   // The model number of the dongle determines what it is capable of
   // We only deal with one dongle model so far
-  if ('CS1816' === info.modelNumber) {
+  if ('CS1816' === dongleInfo.modelNumber) {
 
     // Send configuration to the dongle
     console.log(label('Configuring... '));
@@ -158,7 +160,7 @@ async function connect(dongle) {
     //let cloudAccessKey = await dongle.readAccessKey();
 
   } else {
-    console.error(error('Unknown Dongle Model: '), info.modelNumber);
+    console.error(error('Unknown Dongle Model: '), dongleInfo.modelNumber);
     dongle.disconnect();
     process.exit(3);
   }
@@ -205,7 +207,7 @@ async function setCs1108Watchers(dongle) {
   });
 
   // Put in more watchers, up to the limit
-  await dongle.watch(4, CONTROLLER_ID, 0x002E, 1, (value) => {
+  await dongle.watch(4, CONTROLLER_ID, 0x0065, 1, (value) => {
     console.log(label('PWM4: '), value);
   });
   await dongle.watch(5, CONTROLLER_ID, 0x002E, 1, (value) => {
@@ -220,11 +222,52 @@ async function setCs1108Watchers(dongle) {
   await dongle.watch(8, CONTROLLER_ID, 0x002E, 1, (value) => {
     console.log(label('PWM8: '), value);
   });
-  await dongle.watch(9, CONTROLLER_ID, 0x002E, 1, (value) => {
+  await dongle.watch(9, CONTROLLER_ID, 0x0065, 1, (value) => {
     console.log(label('PWM9: '), value);
   });
 
-}
+  // Add superwatcher - up to 25 addresses
+  if (dongleInfo && parseFloat(dongleInfo.softwareRevision) >= 1.5) {
+    let superWatcherMembers = [0x0005, 0x0006, 0x0007, 0x0008, 0x0009,
+                               0x000A, 0x000B, 0x000C, 0x000D, 0x000E,
+                               0x000F, 0x0010, 0x0011, 0x0012, 0x0013,
+                               0x0014, 0x0015, 0x0016, 0x0017, 0x0018,
+                               0x0019, 0x001A, 0x001B, 0x001C, 0x001D];
+
+    await dongle.superwatch(CONTROLLER_ID, superWatcherMembers, (value) => {
+      console.log(label('SuperWatcher: '), value);
+    });
+  }
+
+  // Delay to demonstrate re-setting or clearing the super-watcher
+  // await (async () => {return new Promise(resolve => setTimeout(resolve, 5000)); })();
+
+  // Method 1 of clearing the super-watcher
+  // await dongle.unwatch(0xFF);
+
+  // Method 2 of clearing the super-watcher
+  // await dongle.superwatch(CONTROLLER_ID, [], (value) => {
+  //   console.log(label('SuperWatcher: '), value);
+  // });
+
+  // Re-setting the super-watcher
+  // await dongle.superwatch(CONTROLLER_ID, [0x0064, 0x0065], (value) => {
+  //   console.log(label('SuperWatcher: '), value);
+  // });
+
+  // Read back watcher configuration
+  if (dongleInfo && parseFloat(dongleInfo.softwareRevision) >= 1.4) {
+    dongle.getWatchers().then((watchers) => {
+      console.log(label("Watchers:"), watchers);
+    });
+
+    dongle.getSuperWatcher().then((members) => {
+      console.log(label("SuperWatcher Members:"), members);
+    });
+  }
+
+
+ }
 
 /**
  * Shows reading and writing to CS1108 controller memory
@@ -291,9 +334,9 @@ ble.once('stateChange', function(state) {
       });
 
       connect(dongle)
-      .then(() => setCs1108Watchers(dongle))
-
       .then(() => Cs1108MemoryTest(dongle))
+
+      .then(() => setCs1108Watchers(dongle))
 
       .catch((err) => {
         console.log(err);
