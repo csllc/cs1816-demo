@@ -287,7 +287,7 @@ async function Cs1108MemoryTest(dongle) {
 
   let data;
 
-  console.log(label('Reading Memory... '));
+  console.log(label('Reading memory... '));
   data = await mc.readMemory(0x0300, 128);
   printData(0x300, data);
 
@@ -298,6 +298,18 @@ async function Cs1108MemoryTest(dongle) {
   // This just writes the first byte back to the motor controller
   console.log(label('Writing memory... '));
   await mc.writeMemory(0x0300, Buffer.from([data[0]]));
+
+  if (dongleInfo && parseFloat(dongleInfo.softwareRevision) >= 1.6) {
+    // Read some memory, then write it back, this time using the 'write memory verify' commad.
+    // The dongle will write the memory on the controller like before, but behind the scenes
+    // it'll read it back to verify the write was successful.
+    console.log(label('Reading memory again...'));
+    data = await mc.readMemory(0x0370, 4);
+    printData(0x370, data);
+
+    console.log(label('Writing memory with verification... '));
+    await mc.writeMemoryVerify(0x0370, data);
+  }
 
   console.log(label('Success!'));
 
