@@ -157,7 +157,18 @@ async function connect(dongle) {
     await dongle.keyswitch(true);
 
     // retrieve our cloud access key
-    //let cloudAccessKey = await dongle.readAccessKey();
+    if (dongleInfo && parseFloat(dongleInfo.softwareRevision) >= 1.8) {
+      console.log(label('Reading access key... '));
+      let cloudAccessKey = await dongle.readAccessKey();
+
+      if (cloudAccessKey.every(v => v === 0xFF)) {
+        // If unset, set it
+        let cloudAccessKeyBuffer = Buffer.from([...Array(128).keys()]);
+
+        console.log(label('Writing access key... '));
+        await dongle.writeAccessKey(cloudAccessKeyBuffer);
+      }
+    }
 
   } else {
     console.error(error('Unknown Dongle Model: '), dongleInfo.modelNumber);
@@ -347,9 +358,7 @@ ble.once('stateChange', function(state) {
 
       connect(dongle)
       .then(() => Cs1108MemoryTest(dongle))
-
       .then(() => setCs1108Watchers(dongle))
-
       .catch((err) => {
         console.log(err);
         console.error(err.message);
